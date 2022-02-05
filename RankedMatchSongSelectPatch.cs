@@ -47,9 +47,9 @@ public class RankedMatchSongSelectPatch
         {
             friendLevelType = EnsoData.EnsoLevelType.Mania;
         }
-        else if(isUraExist && Input.GetKey(KeyCode.M))
+        else if(Input.GetKey(KeyCode.M))
         {
-            friendLevelType = EnsoData.EnsoLevelType.Ura;
+            friendLevelType = isUraExist ? EnsoData.EnsoLevelType.Ura : EnsoData.EnsoLevelType.Mania;
         }
         else if(hasConfigDefault)
         {
