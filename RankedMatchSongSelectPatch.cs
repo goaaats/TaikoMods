@@ -54,7 +54,14 @@ public class RankedMatchSongSelectPatch
         else if(hasConfigDefault)
         {
             Log.LogInfo($"[RankedMatchSongSelectPatch] No key pressed, using config default: {configDefault}");
-            friendLevelType = configDefault;
+            if (configDefault == EnsoData.EnsoLevelType.Ura && !isUraExist)
+            {
+                friendLevelType = EnsoData.EnsoLevelType.Mania;
+            }
+            else
+            {
+                friendLevelType = configDefault;
+            }
         }
         else
         {
