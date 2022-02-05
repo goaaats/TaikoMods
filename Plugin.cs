@@ -16,6 +16,7 @@ namespace TaikoMods
         public ConfigEntry<bool> ConfigDisableScreenChangeOnFocus;
         public ConfigEntry<bool> ConfigFixSignInScreen;
         public ConfigEntry<int> ConfigFriendMatchingDefaultDifficulty;
+        public ConfigEntry<bool> ConfigSaveOnlineScores;
         public ConfigEntry<bool> ConfigEnableCustomSongs;
         public ConfigEntry<string> ConfigSongDirectory;
         public ConfigEntry<string> ConfigSaveDirectory;
@@ -60,6 +61,11 @@ namespace TaikoMods
                 0,
                 "Default difficulty for friend matching: 0 = default rank-based, 1 = easy, 2 = normal, 3 = hard, 4 = oni, 5 = ura(if exist)");
 
+            ConfigSaveOnlineScores = Config.Bind("General",
+                "SaveOnlineScores",
+                true,
+                "When enabled, the game will save your score locally after finishing an online match, be it ranked or friend matches");
+
             ConfigEnableCustomSongs = Config.Bind("CustomSongs",
                 "EnableCustomSongs",
                 true,
@@ -90,14 +96,17 @@ namespace TaikoMods
             if (ConfigDisableScreenChangeOnFocus.Value)
                 _harmony.PatchAll(typeof(DisableScreenChangeOnFocus));
 
+            if (ConfigSaveOnlineScores.Value)
+                _harmony.PatchAll(typeof(RankedMatchScoreSavePatch));
+
             if (ConfigEnableCustomSongs.Value)
             {
                 _harmony.PatchAll(typeof(MusicPatch));
                 MusicPatch.Setup(_harmony);
             }
 
-            this._harmony.PatchAll(typeof(RankedMatchSongSelectPatch));
-            this._harmony.PatchAll(typeof(RankedMatchNetworkDlcPatch));
+            _harmony.PatchAll(typeof(RankedMatchSongSelectPatch));
+            _harmony.PatchAll(typeof(RankedMatchNetworkDlcPatch));
         }
 
         public void StartCustomCoroutine(IEnumerator enumerator)
