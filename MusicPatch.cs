@@ -172,7 +172,7 @@ public class MusicPatch
                 Log.LogError($"Cannot load song {song.songName.text} with ID {song.uniqueId} as it clashes with another, skipping it...");
                 continue;
             }
-            
+
             if (uniqueIdToSong.ContainsKey(song.uniqueId))
             {
                 var uniqueIdTest = song.id.GetHashCode();
@@ -185,7 +185,7 @@ public class MusicPatch
 
             customSongsList.Add(song);
             idToSong[song.id] = song;
-            uniqueIdToSong[song.uniqueId] = song;            
+            uniqueIdToSong[song.uniqueId] = song;
             Log.LogInfo($"Added Song {song.songName.text}:{song.id}:{song.uniqueId}");
         }
 
@@ -223,7 +223,7 @@ public class MusicPatch
         for (int i = 0; i < customSongs.Count; i++)
         {
             musicInfoAccessors.Add(new MusicDataInterface.MusicInfoAccesser(customSongs[i].uniqueId, customSongs[i].id, $"song_{customSongs[i].id}", customSongs[i].order, customSongs[i].genreNo,
-                true, false, 0, false, 0, new bool[5]
+                true, false, 0, false, 2, new bool[5]
                 {
                     customSongs[i].branchEasy,
                     customSongs[i].branchNormal,
@@ -249,7 +249,7 @@ public class MusicPatch
                     customSongs[i].shinutiEasyDuet,
                     customSongs[i].shinutiNormalDuet,
                     customSongs[i].shinutiHardDuet,
-                    customSongs[i].shinutiManiaDuet, 
+                    customSongs[i].shinutiManiaDuet,
                     customSongs[i].shinutiUraDuet
                 }, new int[5]
                 {
@@ -263,7 +263,7 @@ public class MusicPatch
 
         #endregion
 
-        // sort this 
+        // sort this
         musicInfoAccessors.Sort((MusicDataInterface.MusicInfoAccesser a, MusicDataInterface.MusicInfoAccesser b) => a.Order - b.Order);
     }
 
@@ -576,7 +576,7 @@ public class MusicPatch
         settings.isDailyBonus = (bool) songInfoType.GetField("IsDailyBonus").GetValue(selectedSongInfo);
         ensoMode.songUniqueId = settings.musicUniqueId;
         ensoMode.level = (EnsoData.EnsoLevelType) selectedCourse;
-        
+
         SetSettings();
         typeof(CourseSelect).GetField("ensoMode", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(__instance, ensoMode);
         SetSaveDataEnsoMode(Enum.Parse(playerTypeEnumType, "Player1"));
@@ -837,7 +837,7 @@ public class MusicPatch
         }
 #pragma warning restore Harmony003
     }
-    
+
     #endregion
 
     #region Read Fumen
