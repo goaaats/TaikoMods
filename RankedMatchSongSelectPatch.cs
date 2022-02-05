@@ -24,7 +24,7 @@ public class RankedMatchSongSelectPatch
         if (!EnsoData.IsFriendMatch(rankedMatchStatus.CurrentMatchingType))
             return true;
 
-        Log.LogInfo("NOW choosing difficulty for friend match");
+        Log.LogInfo("[RankedMatchSongSelectPatch] NOW choosing difficulty for friend match");
 
         var hasConfigDefault = Plugin.Instance.ConfigFriendMatchingDefaultDifficulty.Value != 0;
         var configDefault = (EnsoData.EnsoLevelType)Plugin.Instance.ConfigFriendMatchingDefaultDifficulty.Value - 1;
@@ -53,12 +53,12 @@ public class RankedMatchSongSelectPatch
         }
         else if(hasConfigDefault)
         {
-            Log.LogInfo($"No key pressed, using config default: {configDefault}");
+            Log.LogInfo($"[RankedMatchSongSelectPatch] No key pressed, using config default: {configDefault}");
             friendLevelType = configDefault;
         }
         else
         {
-            Log.LogInfo("No key pressed, choosing random difficulty");
+            Log.LogInfo("[RankedMatchSongSelectPatch] No key pressed, choosing random difficulty");
             return true; // Use the random algorithm if no key is pressed
         }
 
