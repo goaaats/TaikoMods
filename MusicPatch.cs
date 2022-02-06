@@ -169,18 +169,16 @@ public class MusicPatch
 
             if (idToSong.ContainsKey(song.id))
             {
-                Log.LogError($"Cannot load song {song.songName.text} with ID {song.uniqueId} as it clashes with another, skipping it...");
+                Log.LogError($"Cannot load song {song.songName.text} with ID as it clashes with another, skipping it...");
                 continue;
             }
 
+            // Clip off the last bit of the hash to make sure that the number is positive. This will lead to more collisions, but we should be fine.
+            song.uniqueId = (int)(MurmurHash2.Hash(song.id) & 0xFFFF_FFF);
+
             if (uniqueIdToSong.ContainsKey(song.uniqueId))
             {
-                var uniqueIdTest = song.id.GetHashCode();
-                while (uniqueIdToSong.ContainsKey(uniqueIdTest))
-                    uniqueIdTest++;
-
-                Log.LogWarning($"Found song {song.songName.text} with an existing ID {song.uniqueId}, changing it to {uniqueIdTest}");
-                song.uniqueId = uniqueIdTest;
+                throw new Exception($"Song \"{song.id}\" has collision with \"{uniqueIdToSong[song.uniqueId].id}\", bailing out...");
             }
 
             customSongsList.Add(song);
