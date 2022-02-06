@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using BepInEx.Logging;
 using HarmonyLib;
 using OnlineManager;
@@ -12,6 +13,25 @@ namespace TaikoMods.RankedMatch;
 public class RankedMatchSongSelectPatch
 {
     public static ManualLogSource Log => Plugin.Log;
+
+    private static RankedMatchSongSelect _rankedMatchSongSelect;
+
+    [HarmonyPatch(typeof(RankedMatchSceneManager), "Start")]
+    [HarmonyPatch(MethodType.Normal)]
+    [HarmonyPostfix]
+    public static void Start_Postfix(RankedMatchSceneManager __instance)
+    {
+	    var go = new GameObject("RankedMatchSongSelect");
+
+	    _rankedMatchSongSelect = go.AddComponent<RankedMatchSongSelect>();
+	    _rankedMatchSongSelect.SceneManager = __instance;
+	    /*
+	    _rankedMatchSongSelect.SetMusicChoices(TaikoSingletonMonoBehaviour<CommonObjects>.Instance.MyDataManager.MusicData.musicInfoAccessers.OrderBy(info => info.UniqueId).ToList());
+	    _rankedMatchSongSelect.Mode = RankedMatchSongSelect.SongSelectMode.Song;
+	    _rankedMatchSongSelect.IsActive = true;
+
+	    */
+    }
 
     /// <summary>
     /// We are basically reimplementing MatchingProcess here, seems like the cleanest way to go about it.
@@ -187,6 +207,7 @@ public class RankedMatchSongSelectPatch
 		    }
 
 		    /* =========== MINE =========== */
+		    /*
 		    DecideDifficultyInfo? otherPlayerDiffDecide = null;
 		    if (networkManager.IsMatchingHost() && EnsoData.IsFriendMatch(status.CurrentMatchingType))
 		    {
@@ -210,28 +231,148 @@ public class RankedMatchSongSelectPatch
 			    };
 			    TaikoSingletonMonoBehaviour<XboxLiveOnlineManager>.Instance.SendData((ReceiveDataType)CustomReceiveDataType.DecideNonHostDifficulty, decideDifficultyInfo);
 		    }
+		    */
 		    /* ============================ */
 
 		    status.CurrentMatchingState = MatchingState.TransceiveSongInfo;
 		    if (networkManager.IsMatchingHost())
 		    {
-			    status.MatchingSongUniqueId = __instance.GetMatchingSongUniqueId(status.MatchingPlayer1Music.playHistory,
-				    status.MatchingPlayer1Music.purchasedMusicList, status.MatchingPlayer2Music.playHistory,
-				    status.MatchingPlayer2Music.purchasedMusicList);
-			    status.GetMusicInfo(status.MatchingSongUniqueId, out var info2);
-			    __instance.GetDifficulty(info2, status.MatchingPlayer1Data.rankType, status.MatchingPlayer2Data.rankType,
-				    out var level, out var level2);
-			    EnsoSetting matchingPlayer1Setting = status.MatchingPlayer1Setting;
-			    matchingPlayer1Setting.difficulty = level;
-			    status.MatchingPlayer1Setting = matchingPlayer1Setting;
-			    EnsoSetting matchingPlayer2Setting = status.MatchingPlayer2Setting;
-			    matchingPlayer2Setting.difficulty = level2;
+			    /* =========== MINE =========== */
+			    if (EnsoData.IsFriendMatch(status.CurrentMatchingType)) // TODO: Can we somehow indicate in account info that taikomods is being used?
+			    {
+				    var musicInfoList = status.GetMusicInfoList();
 
-			    if (otherPlayerDiffDecide.HasValue)
-				    matchingPlayer2Setting.difficulty = otherPlayerDiffDecide.Value.LevelType;
+				    for (int num = musicInfoList.Count - 1; num >= 0; num--)
+				    {
+					    var musicInfoAccesser = musicInfoList[num];
 
-			    status.MatchingPlayer2Setting = matchingPlayer2Setting;
+					    if (!musicInfoAccesser.IsDLC)
+						    continue;
+
+					    var needHasPlayerNum = 0;
+					    needHasPlayerNum += (status.MatchingPlayer1Music.purchasedMusicList.Contains(musicInfoAccesser.UniqueId) ? 1 : 0);
+					    needHasPlayerNum += (status.MatchingPlayer2Music.purchasedMusicList.Contains(musicInfoAccesser.UniqueId) ? 1 : 0);
+					    if (needHasPlayerNum == 0 || needHasPlayerNum < musicInfoAccesser.RankmatchNeedHasPlayer)
+					    {
+						    musicInfoList.RemoveAt(num);
+					    }
+				    }
+
+				    _rankedMatchSongSelect.Mode = RankedMatchSongSelect.SongSelectMode.Song;
+				    _rankedMatchSongSelect.ResetChoices();
+				    _rankedMatchSongSelect.SetMusicChoices(musicInfoList);
+				    _rankedMatchSongSelect.IsActive = true;
+
+				    Log.LogInfo("[MatchingProcess] Now waiting local song choice");
+
+				    yield return new WaitUntil(() => _rankedMatchSongSelect.ChosenSong != null);
+
+				    status.MatchingSongUniqueId = _rankedMatchSongSelect.ChosenSong.UniqueId;
+
+				    isDone = false;
+				    StartTransceiveSongPreviewInfo(__instance.networkManager, delegate(bool result)
+				    {
+					    isDone = true;
+					    isSucceeded = result;
+				    });
+				    yield return new WaitUntil(() => isDone);
+				    if (!isSucceeded)
+				    {
+					    __instance.StartRematch();
+					    yield break;
+				    }
+
+				    Log.LogInfo("[MatchingProcess] Transceived local song choice");
+
+				    Log.LogInfo("[MatchingProcess] Now waiting for other player difficulty");
+				    isDone = false;
+				    StartTransceiveDecideDifficultyInfo(__instance.networkManager, delegate(bool result)
+				    {
+					    isDone = true;
+					    isSucceeded = result;
+				    });
+				    yield return new WaitUntil(() => isDone);
+				    if (!isSucceeded)
+				    {
+					    __instance.StartRematch();
+					    yield break;
+				    }
+
+				    yield return new WaitUntil(() => _rankedMatchSongSelect.ChosenDifficulty.HasValue);
+
+				    var matchingPlayer1Setting = status.MatchingPlayer1Setting;
+				    matchingPlayer1Setting.difficulty = _rankedMatchSongSelect.ChosenDifficulty.Value;
+				    status.MatchingPlayer1Setting = matchingPlayer1Setting;
+				    var matchingPlayer2Setting = status.MatchingPlayer2Setting;
+				    matchingPlayer2Setting.difficulty = decideDifficulty;
+				    status.MatchingPlayer2Setting = matchingPlayer2Setting;
+
+				    Log.LogInfo("[MatchingProcess] Set up!");
+			    }
+			    /* ============================ */
+			    else
+			    {
+				    status.MatchingSongUniqueId = __instance.GetMatchingSongUniqueId(status.MatchingPlayer1Music.playHistory,
+					    status.MatchingPlayer1Music.purchasedMusicList, status.MatchingPlayer2Music.playHistory,
+					    status.MatchingPlayer2Music.purchasedMusicList);
+				    status.GetMusicInfo(status.MatchingSongUniqueId, out var info2);
+				    __instance.GetDifficulty(info2, status.MatchingPlayer1Data.rankType, status.MatchingPlayer2Data.rankType,
+					    out var level, out var level2);
+
+				    EnsoSetting matchingPlayer1Setting = status.MatchingPlayer1Setting;
+				    matchingPlayer1Setting.difficulty = level;
+				    status.MatchingPlayer1Setting = matchingPlayer1Setting;
+				    EnsoSetting matchingPlayer2Setting = status.MatchingPlayer2Setting;
+				    matchingPlayer2Setting.difficulty = level2;
+				    status.MatchingPlayer2Setting = matchingPlayer2Setting;
+			    }
 		    }
+		    /* =========== MINE =========== */
+		    else if (EnsoData.IsFriendMatch(status.CurrentMatchingType))
+		    {
+			    _rankedMatchSongSelect.ResetChoices();
+			    _rankedMatchSongSelect.Mode = RankedMatchSongSelect.SongSelectMode.SongWaitHost;
+			    _rankedMatchSongSelect.IsActive = true;
+
+			    Log.LogInfo("[MatchingProcess] Now waiting for other player song choice");
+
+			    isDone = false;
+			    StartTransceiveSongPreviewInfo(__instance.networkManager, delegate(bool result)
+			    {
+				    isDone = true;
+				    isSucceeded = result;
+			    });
+			    yield return new WaitUntil(() => isDone);
+			    if (!isSucceeded)
+			    {
+				    __instance.StartRematch();
+				    yield break;
+			    }
+
+			    Log.LogInfo($"[MatchingProcess] Got song choice from other player: {previewSongUniqueId}");
+
+			    var chosenSongAccessor = status.GetMusicInfoList().First(x => x.UniqueId == previewSongUniqueId);
+
+			    _rankedMatchSongSelect.ChosenSong = chosenSongAccessor;
+			    _rankedMatchSongSelect.Mode = RankedMatchSongSelect.SongSelectMode.Difficulty;
+			    _rankedMatchSongSelect.IsActive = true;
+			    yield return new WaitUntil(() => _rankedMatchSongSelect.ChosenDifficulty.HasValue);
+
+			    Log.LogInfo("[MatchingProcess] Now sending other player difficulty");
+			    isDone = false;
+			    StartTransceiveDecideDifficultyInfo(__instance.networkManager, delegate(bool result)
+			    {
+				    isDone = true;
+				    isSucceeded = result;
+			    });
+			    yield return new WaitUntil(() => isDone);
+			    if (!isSucceeded)
+			    {
+				    __instance.StartRematch();
+				    yield break;
+			    }
+		    }
+		    /* ============================ */
 
 		    isDone = false;
 		    networkManager.StartTransceiveSongInfo(2, delegate(bool result)
@@ -319,6 +460,151 @@ public class RankedMatchSongSelectPatch
         return false;
     }
 
+    private static int previewSongUniqueId = 0;
+    private static EnsoData.EnsoLevelType decideDifficulty = EnsoData.EnsoLevelType.Easy;
+
+    private static void StartTransceiveSongPreviewInfo(RankedMatchNetworkManager networkManager, BoolDelegate callback)
+    {
+	    const int ackId = 14;
+
+	    networkManager.isMatchingErrorCalled = false;
+	    if (networkManager.status.CurrentMatchingType == EnsoData.RankMatchType.RankMatch)
+	    {
+		    if (networkManager.waitingCoroutine != null) networkManager.StopCoroutine(networkManager.waitingCoroutine);
+		    networkManager.waitingCoroutine = CoroutineWait(callback);
+		    networkManager.StartCoroutine(networkManager.waitingCoroutine);
+	    }
+
+	    SongPreviewInfo musicInfo;
+	    if (TaikoSingletonMonoBehaviour<XboxLiveOnlineManager>.Instance.IsHost)
+	    {
+		    musicInfo = default;
+		    musicInfo.SongUniqueId = networkManager.status.MatchingSongUniqueId;
+		    if (networkManager.sendingCoroutine != null) networkManager.StopCoroutine(networkManager.sendingCoroutine);
+		    networkManager.sendingCoroutine = HostCoroutineSend();
+		    networkManager.StartCoroutine(networkManager.sendingCoroutine);
+		    if (networkManager.matchingCoroutine != null) networkManager.StopCoroutine(networkManager.matchingCoroutine);
+		    networkManager.matchingCoroutine = HostCoroutineRecieve(callback);
+		    networkManager.StartCoroutine(networkManager.matchingCoroutine);
+	    }
+	    else
+	    {
+		    if (networkManager.matchingCoroutine != null) networkManager.StopCoroutine(networkManager.matchingCoroutine);
+		    networkManager.matchingCoroutine = ClientCoroutine(callback);
+		    networkManager.StartCoroutine(networkManager.matchingCoroutine);
+	    }
+
+	    IEnumerator ClientCoroutine(BoolDelegate callback)
+	    {
+		    var previewInfo = default(SongPreviewInfo);
+		    yield return new WaitUntil(() =>
+			    TaikoSingletonMonoBehaviour<XboxLiveOnlineManager>.Instance.GetLastRecieveData(
+				    (ReceiveDataType) CustomReceiveDataType.SongPreviewInfo, ref previewInfo));
+		    if (networkManager.waitingCoroutine != null) networkManager.StopCoroutine(networkManager.waitingCoroutine);
+		    previewSongUniqueId = previewInfo.SongUniqueId;
+		    callback(true);
+	    }
+
+	    IEnumerator CoroutineWait(BoolDelegate callback)
+	    {
+		    yield return new WaitForSeconds(networkManager.setting.matchingTransceivingSec);
+		    if (networkManager.sendingCoroutine != null) networkManager.StopCoroutine(networkManager.sendingCoroutine);
+		    if (networkManager.matchingCoroutine != null) networkManager.StopCoroutine(networkManager.matchingCoroutine);
+		    callback(false);
+	    }
+
+	    IEnumerator HostCoroutineRecieve(BoolDelegate callback)
+	    {
+		    yield return new WaitUntil(() => TaikoSingletonMonoBehaviour<XboxLiveOnlineManager>.Instance.CheckACK(ackId));
+		    if (networkManager.sendingCoroutine != null) networkManager.StopCoroutine(networkManager.sendingCoroutine);
+		    if (networkManager.waitingCoroutine != null) networkManager.StopCoroutine(networkManager.waitingCoroutine);
+		    callback(true);
+	    }
+
+	    IEnumerator HostCoroutineSend()
+	    {
+		    while (!TaikoSingletonMonoBehaviour<XboxLiveOnlineManager>.Instance.CheckACK(ackId))
+		    {
+			    TaikoSingletonMonoBehaviour<XboxLiveOnlineManager>.Instance.SendACK(ackId);
+			    TaikoSingletonMonoBehaviour<XboxLiveOnlineManager>.Instance.SendData((ReceiveDataType) CustomReceiveDataType.SongPreviewInfo,
+				    musicInfo);
+			    yield return null;
+		    }
+	    }
+    }
+
+    private static void StartTransceiveDecideDifficultyInfo(RankedMatchNetworkManager networkManager, BoolDelegate callback)
+    {
+	    const int ackId = 15;
+
+	    networkManager.isMatchingErrorCalled = false;
+	    if (networkManager.status.CurrentMatchingType == EnsoData.RankMatchType.RankMatch)
+	    {
+		    if (networkManager.waitingCoroutine != null) networkManager.StopCoroutine(networkManager.waitingCoroutine);
+		    networkManager.waitingCoroutine = CoroutineWait(callback);
+		    networkManager.StartCoroutine(networkManager.waitingCoroutine);
+	    }
+
+	    DecideDifficultyInfo decideInfo;
+	    if (!TaikoSingletonMonoBehaviour<XboxLiveOnlineManager>.Instance.IsHost)
+	    {
+		    decideInfo = default;
+		    decideInfo.HasDecision = true;
+		    decideInfo.LevelType = _rankedMatchSongSelect.ChosenDifficulty.Value;
+
+		    if (networkManager.sendingCoroutine != null) networkManager.StopCoroutine(networkManager.sendingCoroutine);
+		    networkManager.sendingCoroutine = HostCoroutineSend();
+		    networkManager.StartCoroutine(networkManager.sendingCoroutine);
+		    if (networkManager.matchingCoroutine != null) networkManager.StopCoroutine(networkManager.matchingCoroutine);
+		    networkManager.matchingCoroutine = HostCoroutineRecieve(callback);
+		    networkManager.StartCoroutine(networkManager.matchingCoroutine);
+	    }
+	    else
+	    {
+		    if (networkManager.matchingCoroutine != null) networkManager.StopCoroutine(networkManager.matchingCoroutine);
+		    networkManager.matchingCoroutine = ClientCoroutine(callback);
+		    networkManager.StartCoroutine(networkManager.matchingCoroutine);
+	    }
+
+	    IEnumerator ClientCoroutine(BoolDelegate callback)
+	    {
+		    var decideDifficultyInfo = default(DecideDifficultyInfo);
+		    yield return new WaitUntil(() =>
+			    TaikoSingletonMonoBehaviour<XboxLiveOnlineManager>.Instance.GetLastRecieveData(
+				    (ReceiveDataType) CustomReceiveDataType.DecideNonHostDifficulty, ref decideDifficultyInfo));
+		    if (networkManager.waitingCoroutine != null) networkManager.StopCoroutine(networkManager.waitingCoroutine);
+		    decideDifficulty = decideDifficultyInfo.LevelType;
+		    callback(true);
+	    }
+
+	    IEnumerator CoroutineWait(BoolDelegate callback)
+	    {
+		    yield return new WaitForSeconds(networkManager.setting.matchingTransceivingSec);
+		    if (networkManager.sendingCoroutine != null) networkManager.StopCoroutine(networkManager.sendingCoroutine);
+		    if (networkManager.matchingCoroutine != null) networkManager.StopCoroutine(networkManager.matchingCoroutine);
+		    callback(false);
+	    }
+
+	    IEnumerator HostCoroutineRecieve(BoolDelegate callback)
+	    {
+		    yield return new WaitUntil(() => TaikoSingletonMonoBehaviour<XboxLiveOnlineManager>.Instance.CheckACK(ackId));
+		    if (networkManager.sendingCoroutine != null) networkManager.StopCoroutine(networkManager.sendingCoroutine);
+		    if (networkManager.waitingCoroutine != null) networkManager.StopCoroutine(networkManager.waitingCoroutine);
+		    callback(true);
+	    }
+
+	    IEnumerator HostCoroutineSend()
+	    {
+		    while (!TaikoSingletonMonoBehaviour<XboxLiveOnlineManager>.Instance.CheckACK(ackId))
+		    {
+			    TaikoSingletonMonoBehaviour<XboxLiveOnlineManager>.Instance.SendACK(ackId);
+			    TaikoSingletonMonoBehaviour<XboxLiveOnlineManager>.Instance.SendData((ReceiveDataType) CustomReceiveDataType.DecideNonHostDifficulty,
+				    decideInfo);
+			    yield return null;
+		    }
+	    }
+    }
+
     [HarmonyPatch(typeof(RankedMatchSceneManager), "GetDifficulty")]
     [HarmonyPatch(MethodType.Normal)]
     [HarmonyPrefix]
@@ -351,6 +637,8 @@ public class RankedMatchSongSelectPatch
     [HarmonyPrefix]
     public static bool ClearAllReceiveData_Prefix(XboxLiveOnlineManager __instance)
     {
+	    Log.LogInfo("[ClearAllReceiveData] Cleared!");
+
 	    foreach (Queue<object> receiveDatum in __instance.receiveData)
 	    {
 		    receiveDatum.Clear();
@@ -370,10 +658,18 @@ public class RankedMatchSongSelectPatch
     [HarmonyPrefix]
     public static bool SetObject_Prefix(XboxLiveOnlineManager __instance, ref byte[] objData, ReceiveDataType type)
     {
-	    //Log.LogInfo($"[SetObject] type: {type}");
+	    Log.LogInfo($"[SetObject] type: {type}");
 
-	    if (type == (ReceiveDataType)CustomReceiveDataType.DecideNonHostDifficulty)
-		    __instance.Enqueue<DecideDifficultyInfo>(ref objData, type);
+	    switch (type)
+	    {
+		    case (ReceiveDataType)CustomReceiveDataType.DecideNonHostDifficulty:
+			    __instance.Enqueue<DecideDifficultyInfo>(ref objData, type);
+			    break;
+		    case (ReceiveDataType)CustomReceiveDataType.SongPreviewInfo:
+			    Log.LogInfo($"[SetObject] Enqueue ok");
+			    __instance.Enqueue<SongPreviewInfo>(ref objData, type);
+			    break;
+	    }
 
 	    /*
 	    switch (type)
@@ -408,6 +704,8 @@ public class RankedMatchSongSelectPatch
 	{
 		Log.LogInfo($"[ClearMatchingInfo] Cleared!");
 	    __instance.ClearEachRecieveData((ReceiveDataType) CustomReceiveDataType.DecideNonHostDifficulty);
+	    __instance.ClearEachRecieveData((ReceiveDataType) CustomReceiveDataType.SongPreviewInfo);
+
 	    return true;
 	}
 

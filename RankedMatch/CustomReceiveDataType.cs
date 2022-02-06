@@ -13,4 +13,5 @@ public enum CustomReceiveDataType
     */
 
     DecideNonHostDifficulty = 6,
+    SongPreviewInfo = 7,
 }
