@@ -170,7 +170,7 @@ public class RankedMatchSongSelect : MonoBehaviour
                         if (hasSearchTerm)
                         {
                             var words = _songNameDict[x.UniqueId];
-                            termMatches = words.Title.ToLower().Contains(searchTerm) || words.Artist.ToLower().Contains(searchTerm);
+                            termMatches = words.Title.ToLower().Contains(searchTerm) || words.Artist.ToLower().Contains(searchTerm) || x.Id.Contains(searchTerm);
                         }
 
                         var genreMatches = true;
