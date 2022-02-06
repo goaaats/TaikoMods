@@ -13,6 +13,7 @@ public class RankedMatchSongSelect : MonoBehaviour
     private Dictionary<int, (string Title, string Artist)> _songNameDict = new();
     private bool _songListenIsCued = false;
     private List<MusicDataInterface.MusicInfoAccesser> _songListFiltered = null;
+    private bool _isListening = false;
 
     public bool IsActive { get; set; }
 
@@ -43,16 +44,7 @@ public class RankedMatchSongSelect : MonoBehaviour
         MusicAvailable = null;
         _songListFiltered = null;
         _genreFilterIndex = 0;
-    }
-
-    private void Start()
-    {
-
-    }
-
-    private void Update()
-    {
-
+        _isListening = false;
     }
 
     public void SetMusicChoices(List<MusicDataInterface.MusicInfoAccesser> choices)
@@ -120,8 +112,13 @@ public class RankedMatchSongSelect : MonoBehaviour
                     if (GUI.Button(new Rect(400, runningY, 70, songLineHeight), "Select"))
                     {
                         ChosenSong = infoAccesser;
-                        SceneManager.songPlayer.StopSong();
-                        SceneManager.PlayBgm();
+
+                        if (_isListening)
+                        {
+                            SceneManager.songPlayer.StopSong();
+                            SceneManager.PlayBgm();
+                            _isListening = false;
+                        }
 
                         Mode = SongSelectMode.Difficulty;
                     }
@@ -131,6 +128,7 @@ public class RankedMatchSongSelect : MonoBehaviour
                         SceneManager.StopBgm();
                         SceneManager.songPlayer.SetupSong(infoAccesser.UniqueId);
                         _songListenIsCued = true;
+                        _isListening = true;
                     }
 
                     runningY += songLineHeight;
@@ -140,6 +138,22 @@ public class RankedMatchSongSelect : MonoBehaviour
 
                 this._songNameFilterText = GUI.TextField(new Rect(10, 310, 300, 30), this._songNameFilterText);
                 GUI.Label(new Rect(315, 315, 500, 100), "Filter by song name");
+
+                if (GUI.Button(new Rect(500, 315, 90, 30), "Random"))
+                {
+                    var rng = new System.Random();
+                    var index = rng.Next(0, this.MusicChoices.Count);
+                    ChosenSong = this.MusicChoices[index];
+
+                    if (_isListening)
+                    {
+                        SceneManager.songPlayer.StopSong();
+                        SceneManager.PlayBgm();
+                        _isListening = false;
+                    }
+
+                    Mode = SongSelectMode.Difficulty;
+                }
 
                 var enumGenres = Enum.GetValues(typeof(EnsoData.SongGenre)).Cast<EnsoData.SongGenre>().Select(x => x.ToString()).Reverse().Skip(1).Reverse();
                 var genreList = new [] { "All" }.Concat(enumGenres).ToArray();
@@ -173,38 +187,56 @@ public class RankedMatchSongSelect : MonoBehaviour
 
             case SongSelectMode.Difficulty:
             {
+                if (!_isListening)
+                {
+                    SceneManager.StopBgm();
+                    SceneManager.songPlayer.SetupSong(this.ChosenSong.UniqueId);
+                    _songListenIsCued = true;
+                    _isListening = true;
+                }
+
+                void StopPlaying()
+                {
+                    SceneManager.songPlayer.StopSong();
+                    SceneManager.PlayBgm();
+                }
+
                 var isExistUra = this.ChosenSong.Stars[4] > 0;
 
                 var width = 410;
                 if (isExistUra)
                     width += 100;
 
-                GUI.Box(new Rect(0, 0, width, 110), string.Empty);
-                GUI.Box(new Rect(0, 0, width, 110), string.Empty);
-                GUI.Box(new Rect(0, 0, width, 110), string.Empty);
+                GUI.Box(new Rect(0, 0, width, 140), string.Empty);
+                GUI.Box(new Rect(0, 0, width, 140), string.Empty);
+                GUI.Box(new Rect(0, 0, width, 140), string.Empty);
 
                 if (GUI.Button(new Rect(10, 10, 90, 90), $"Easy\n{ChosenSong.Stars[0]}★"))
                 {
                     ChosenDifficulty = EnsoData.EnsoLevelType.Easy;
                     IsActive = false;
+                    StopPlaying();
                 }
 
                 if (GUI.Button(new Rect(110, 10, 90, 90), $"Normal\n{ChosenSong.Stars[1]}★"))
                 {
                     ChosenDifficulty = EnsoData.EnsoLevelType.Normal;
                     IsActive = false;
+                    StopPlaying();
                 }
 
                 if (GUI.Button(new Rect(210, 10, 90, 90), $"Hard\n{ChosenSong.Stars[2]}★"))
                 {
                     ChosenDifficulty = EnsoData.EnsoLevelType.Hard;
                     IsActive = false;
+                    StopPlaying();
                 }
 
                 if (GUI.Button(new Rect(310, 10, 90, 90), $"Oni\n{ChosenSong.Stars[3]}★"))
                 {
                     ChosenDifficulty = EnsoData.EnsoLevelType.Mania;
                     IsActive = false;
+                    StopPlaying();
                 }
 
                 if (isExistUra)
@@ -213,8 +245,17 @@ public class RankedMatchSongSelect : MonoBehaviour
                     {
                         ChosenDifficulty = EnsoData.EnsoLevelType.Ura;
                         IsActive = false;
+                        StopPlaying();
                     }
                 }
+
+                var words = _songNameDict[ChosenSong.UniqueId];
+
+                var songLabel = words.Title;
+                if (!string.IsNullOrEmpty(words.Artist))
+                    songLabel += $" - {words.Artist}";
+
+                GUI.Label(new Rect(10, 110, 1000, 30), songLabel);
             }
                 break;
 

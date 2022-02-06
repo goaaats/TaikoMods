@@ -25,9 +25,12 @@ public class RankedMatchSongSelectPatch
 
 	    _rankedMatchSongSelect = go.AddComponent<RankedMatchSongSelect>();
 	    _rankedMatchSongSelect.SceneManager = __instance;
+
+	    /*
 	    _rankedMatchSongSelect.SetMusicChoices(TaikoSingletonMonoBehaviour<CommonObjects>.Instance.MyDataManager.MusicData.musicInfoAccessers.OrderBy(info => info.UniqueId).ToList());
 	    _rankedMatchSongSelect.Mode = RankedMatchSongSelect.SongSelectMode.Song;
 	    _rankedMatchSongSelect.IsActive = true;
+	    */
     }
 
     /// <summary>
