@@ -15,7 +15,21 @@ public class RankedMatchSongSelect : MonoBehaviour
     private List<MusicDataInterface.MusicInfoAccesser> _songListFiltered = null;
     private bool _isListening = false;
 
-    public bool IsActive { get; set; }
+    private bool _internalIsActive = false;
+    public bool IsActive
+    {
+        get => _internalIsActive;
+        set
+        {
+            _internalIsActive = value;
+
+            if (_internalIsActive)
+            {
+                TaikoSingletonMonoBehaviour<ControllerManager>.Instance.SetForcedMouseVisibleOff(false);
+                TaikoSingletonMonoBehaviour<ControllerManager>.Instance.SetMouseVisible(true);
+            }
+        }
+    }
 
     public SongSelectMode Mode { get; set; }
 
