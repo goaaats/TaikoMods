@@ -25,12 +25,9 @@ public class RankedMatchSongSelectPatch
 
 	    _rankedMatchSongSelect = go.AddComponent<RankedMatchSongSelect>();
 	    _rankedMatchSongSelect.SceneManager = __instance;
-	    /*
 	    _rankedMatchSongSelect.SetMusicChoices(TaikoSingletonMonoBehaviour<CommonObjects>.Instance.MyDataManager.MusicData.musicInfoAccessers.OrderBy(info => info.UniqueId).ToList());
 	    _rankedMatchSongSelect.Mode = RankedMatchSongSelect.SongSelectMode.Song;
 	    _rankedMatchSongSelect.IsActive = true;
-
-	    */
     }
 
     /// <summary>
@@ -205,34 +202,6 @@ public class RankedMatchSongSelectPatch
 			    status.CurrentMatchingType = EnsoData.RankMatchType.FriendInviting;
 			    status.CurrentTopMenuButtonState = TopMenuButtonState.MatchingFriend;
 		    }
-
-		    /* =========== MINE =========== */
-		    /*
-		    DecideDifficultyInfo? otherPlayerDiffDecide = null;
-		    if (networkManager.IsMatchingHost() && EnsoData.IsFriendMatch(status.CurrentMatchingType))
-		    {
-			    var otherPlayerDifficulty = default(DecideDifficultyInfo);
-			    Log.LogInfo("[MatchingProcess] Now waiting for other player difficulty");
-			    yield return new WaitUntil(() => TaikoSingletonMonoBehaviour<XboxLiveOnlineManager>.Instance.GetLastRecieveData((ReceiveDataType)CustomReceiveDataType.DecideNonHostDifficulty, ref otherPlayerDifficulty));
-
-			    if (otherPlayerDifficulty.HasDecision)
-					otherPlayerDiffDecide = otherPlayerDifficulty;
-
-			    Log.LogInfo($"[MatchingProcess] Other played decided, HasDecision: {otherPlayerDifficulty.HasDecision}, Difficulty: {otherPlayerDifficulty.LevelType}");
-		    }
-		    else if (!networkManager.IsMatchingHost() && EnsoData.IsFriendMatch(status.CurrentMatchingType))
-		    {
-			    var diff = DecideDifficulty(true);
-			    Log.LogInfo("[MatchingProcess] Now sending other player difficulty");
-			    var decideDifficultyInfo = new DecideDifficultyInfo
-			    {
-				    HasDecision = diff.HasValue,
-				    LevelType = diff ?? EnsoData.EnsoLevelType.Easy,
-			    };
-			    TaikoSingletonMonoBehaviour<XboxLiveOnlineManager>.Instance.SendData((ReceiveDataType)CustomReceiveDataType.DecideNonHostDifficulty, decideDifficultyInfo);
-		    }
-		    */
-		    /* ============================ */
 
 		    status.CurrentMatchingState = MatchingState.TransceiveSongInfo;
 		    if (networkManager.IsMatchingHost())
@@ -632,6 +601,23 @@ public class RankedMatchSongSelectPatch
         return false;
     }
 
+    [HarmonyPatch(typeof(RankedMatchSceneManager), "OnMatchingNetworkError")]
+    [HarmonyPatch(MethodType.Normal)]
+    [HarmonyPostfix]
+    public static void OnMatchingNetworkError_Postfix()
+    {
+	    Log.LogInfo("[OnMatchingNetworkError] Called!");
+	    _rankedMatchSongSelect.IsActive = false;
+    }
+
+    [HarmonyPatch(typeof(RankedMatchSceneManager), "OnMatchingSessionError")]
+    [HarmonyPatch(MethodType.Normal)]
+    [HarmonyPostfix]
+    public static void OnMatchingSessionError_Postfix()
+    {
+	    _rankedMatchSongSelect.IsActive = false;
+    }
+
     [HarmonyPatch(typeof(XboxLiveOnlineManager), "ClearAllRecieveData")]
     [HarmonyPatch(MethodType.Normal)]
     [HarmonyPrefix]
@@ -670,29 +656,6 @@ public class RankedMatchSongSelectPatch
 			    __instance.Enqueue<SongPreviewInfo>(ref objData, type);
 			    break;
 	    }
-
-	    /*
-	    switch (type)
-	    {
-		    case ReceiveDataType.AccountInfo:
-			    __instance.Enqueue<AccountInfo>(ref objData, type);
-			    break;
-		    case ReceiveDataType.SelectMusicInfo:
-			    __instance.Enqueue<SelectMusicInfo>(ref objData, type);
-			    break;
-		    case ReceiveDataType.EnsoInfo:
-			    __instance.Enqueue<EnsoData.OnlineEnsoInfoForTransfer>(ref objData, type);
-			    break;
-		    case ReceiveDataType.EnsoResultInfo:
-			    __instance.Enqueue<EnsoData.OnlineEnsoResultInfoForTransfer>(ref objData, type);
-			    break;
-		    case (ReceiveDataType)CustomReceiveDataType.DecideNonHostDifficulty:
-			    __instance.Enqueue<DecideDifficultyInfo>(ref objData, type);
-			    break;
-		    case ReceiveDataType.Unknown:
-			    break;
-	    }
-	    */
 
 	    return true;
     }
