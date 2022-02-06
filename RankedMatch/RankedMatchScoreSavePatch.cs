@@ -6,7 +6,7 @@ using BepInEx.Logging;
 using HarmonyLib;
 using OpCodes = System.Reflection.Emit.OpCodes;
 
-namespace TaikoMods;
+namespace TaikoMods.RankedMatch;
 
 [HarmonyPatch(typeof(EnsoGameManager))]
 [HarmonyPatch("SetResults")]

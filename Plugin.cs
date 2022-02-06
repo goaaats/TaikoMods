@@ -4,6 +4,7 @@ using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using FlutoTaikoMods;
+using TaikoMods.RankedMatch;
 using HarmonyLib;
 using HarmonyLib.Tools;
 

@@ -4,7 +4,7 @@ using BepInEx.Logging;
 using HarmonyLib;
 using RankedMatch;
 
-namespace TaikoMods;
+namespace TaikoMods.RankedMatch;
 
 [HarmonyPatch(typeof(RankedMatchNetworkManager))]
 [HarmonyPatch("GetPlayMusicInfo")]
