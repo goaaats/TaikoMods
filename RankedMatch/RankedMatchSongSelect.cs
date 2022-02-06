@@ -155,7 +155,7 @@ public class RankedMatchSongSelect : MonoBehaviour
                     Mode = SongSelectMode.Difficulty;
                 }
 
-                var enumGenres = Enum.GetValues(typeof(EnsoData.SongGenre)).Cast<EnsoData.SongGenre>().Select(x => x.ToString()).Reverse().Skip(1).Reverse();
+                var enumGenres = Enum.GetValues(typeof(EnsoData.SongGenre)).Cast<EnsoData.SongGenre>().Where(x => x != EnsoData.SongGenre.Children).Select(x => x.ToString()).Reverse().Skip(1).Reverse();
                 var genreList = new [] { "All" }.Concat(enumGenres).ToArray();
 
                 this._genreFilterIndex = GUI.Toolbar(new Rect(10, 350, 600, 30), _genreFilterIndex, genreList);
@@ -176,7 +176,14 @@ public class RankedMatchSongSelect : MonoBehaviour
                         var genreMatches = true;
                         if (_genreFilterIndex != 0)
                         {
-                            genreMatches = x.GenreNo == _genreFilterIndex - 1;
+                            if (this._genreFilterIndex <= (int)EnsoData.SongGenre.Children)
+                            {
+                                genreMatches = x.GenreNo == _genreFilterIndex - 1;
+                            }
+                            else
+                            {
+                                genreMatches = x.GenreNo == _genreFilterIndex;
+                            }
                         }
 
                         return termMatches && genreMatches;
