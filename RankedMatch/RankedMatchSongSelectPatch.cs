@@ -372,6 +372,10 @@ public class RankedMatchSongSelectPatch
     {
 	    //Log.LogInfo($"[SetObject] type: {type}");
 
+	    if (type == (ReceiveDataType)CustomReceiveDataType.DecideNonHostDifficulty)
+		    __instance.Enqueue<DecideDifficultyInfo>(ref objData, type);
+
+	    /*
 	    switch (type)
 	    {
 		    case ReceiveDataType.AccountInfo:
@@ -392,7 +396,9 @@ public class RankedMatchSongSelectPatch
 		    case ReceiveDataType.Unknown:
 			    break;
 	    }
-	    return false;
+	    */
+
+	    return true;
     }
 
     [HarmonyPatch(typeof(XboxLiveOnlineManager), "ClearMatchingInfo")]
