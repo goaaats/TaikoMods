@@ -129,8 +129,6 @@ public class RankedMatchSongSelect : MonoBehaviour
 
                         if (_isListening)
                         {
-                            SceneManager.songPlayer.StopSong();
-                            SceneManager.PlayBgm();
                             _isListening = false;
                         }
 
