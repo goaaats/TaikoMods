@@ -120,7 +120,7 @@ namespace TakoTako
             }
 
             _harmony.PatchAll(typeof(RandomRepeatPatch));
-            _harmony.PatchAll(typeof(SongSelectFastScrollPatch));
+            _harmony.PatchAll(typeof(FastScrollPatch));
         }
 
         public void StartCustomCoroutine(IEnumerator enumerator)
