@@ -18,6 +18,8 @@ namespace TakoTako
         public ConfigEntry<bool> ConfigFixSignInScreen;
         public ConfigEntry<bool> ConfigEnableCustomSongs;
 
+        public ConfigEntry<bool> ConfigRandomSongSelectSkip;
+
         public ConfigEntry<string> ConfigSongDirectory;
         public ConfigEntry<bool> ConfigSaveEnabled;
         public ConfigEntry<string> ConfigSaveDirectory;
@@ -71,6 +73,11 @@ namespace TakoTako
                 "By default, DLC is enabled for custom songs, this is to reduce any hiccups when playing online with other people. " +
                 "Set this to true if you want DLC to be marked as false, be aware that the fact you're playing a custom song will be sent over the internet");
 
+            ConfigRandomSongSelectSkip = Config.Bind("General",
+                "RandomSongSelectSkip",
+                true,
+                "When true, the game will not proceed to the song screen when selecting a random song, instead letting you re-roll");
+
             ConfigOverrideDefaultSongLanguage = Config.Bind("CustomSongs",
                 "ConfigOverrideDefaultSongLanguage",
                 string.Empty,
@@ -113,13 +120,15 @@ namespace TakoTako
             if (ConfigDisableScreenChangeOnFocus.Value)
                 _harmony.PatchAll(typeof(DisableScreenChangeOnFocus));
 
+            if (ConfigRandomSongSelectSkip.Value)
+                _harmony.PatchAll(typeof(RandomRepeatPatch));
+
             if (ConfigEnableCustomSongs.Value)
             {
                 _harmony.PatchAll(typeof(MusicPatch));
                 MusicPatch.Setup(_harmony);
             }
 
-            _harmony.PatchAll(typeof(RandomRepeatPatch));
             _harmony.PatchAll(typeof(FastScrollPatch));
         }
 
