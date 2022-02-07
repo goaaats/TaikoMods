@@ -10,6 +10,7 @@
     <RootNamespace>TakoTako</RootNamespace>
     <PackageId>com.fluto.takotako</PackageId>
     <PackageVersion>2.0.0</PackageVersion>
+    <NoWarn>Publicizer001</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

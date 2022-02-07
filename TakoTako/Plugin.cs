@@ -5,6 +5,7 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using HarmonyLib.Tools;
+using TakoTako.SongSelect;
 using UnityEngine;
 
 namespace TakoTako
@@ -117,6 +118,9 @@ namespace TakoTako
                 _harmony.PatchAll(typeof(MusicPatch));
                 MusicPatch.Setup(_harmony);
             }
+
+            _harmony.PatchAll(typeof(RandomRepeatPatch));
+            _harmony.PatchAll(typeof(SongSelectFastScrollPatch));
         }
 
         public void StartCustomCoroutine(IEnumerator enumerator)
