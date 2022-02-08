@@ -19,6 +19,7 @@ namespace TakoTako
         public ConfigEntry<bool> ConfigEnableCustomSongs;
 
         public ConfigEntry<bool> ConfigRandomSongSelectSkip;
+        public ConfigEntry<bool> ConfigSongSelectKanbanCrown;
 
         public ConfigEntry<string> ConfigSongDirectory;
         public ConfigEntry<bool> ConfigSaveEnabled;
@@ -78,6 +79,11 @@ namespace TakoTako
                 true,
                 "When true, the game will not proceed to the song screen when selecting a random song, instead letting you re-roll");
 
+            ConfigSongSelectKanbanCrown = Config.Bind("General",
+                "SongSelectKanbanCrown",
+                true,
+                "When true, the song select will show the highest achieved crown on the highest achieved difficulty for each song");
+
             ConfigOverrideDefaultSongLanguage = Config.Bind("CustomSongs",
                 "ConfigOverrideDefaultSongLanguage",
                 string.Empty,
@@ -122,6 +128,9 @@ namespace TakoTako
 
             if (ConfigRandomSongSelectSkip.Value)
                 _harmony.PatchAll(typeof(RandomRepeatPatch));
+
+            if (ConfigSongSelectKanbanCrown.Value)
+                _harmony.PatchAll(typeof(KanbanRankIconPatch));
 
             if (ConfigEnableCustomSongs.Value)
             {

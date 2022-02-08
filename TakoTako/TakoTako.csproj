@@ -25,7 +25,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive; compile</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Taiko.GameLibs" Version="1.2.2-r.0" />
+    <PackageReference Include="Taiko.GameLibs" Version="1.2.2-r.1" />
     <PackageReference Include="UnityEngine.Modules" Version="2020.3.19" IncludeAssets="compile" />
   </ItemGroup>
 
@@ -53,6 +53,8 @@
   <ItemGroup>
     <EmbeddedResource Remove="Executables\**" />
     <EmbeddedResource Remove="Exes\**" />
+    <None Remove="Resources\difficons.assets" />
+    <EmbeddedResource Include="Resources\difficons.assets" />
   </ItemGroup>
 
   <ItemGroup>
