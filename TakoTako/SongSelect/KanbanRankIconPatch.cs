@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using DG.Tweening;
@@ -17,6 +18,7 @@ namespace TakoTako.SongSelect;
 /// <summary>
 /// This patch prevents the game from advancing to the course select after rolling a random song
 /// </summary>
+[SuppressMessage("ReSharper", "InconsistentNaming")]
 public class KanbanRankIconPatch
 {
     private static readonly Dictionary<string, Animator> CrownIcons = new();
@@ -30,7 +32,6 @@ public class KanbanRankIconPatch
     [HarmonyPostfix]
     public static void Start_Postfix(SongSelectManager __instance)
     {
-        UnityEngine.Debug.Log("KanbanRankIconPatch START");
         CrownIcons.Clear();
 
         if (_iconsAssetBundle == null)
@@ -56,7 +57,6 @@ public class KanbanRankIconPatch
     [HarmonyPostfix]
     public static void Destroy_Postfix(SongSelectManager __instance)
     {
-        UnityEngine.Debug.Log("KanbanRankIconPatch Destroy");
         CrownIcons.Clear();
     }
 
