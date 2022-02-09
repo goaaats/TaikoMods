@@ -13,7 +13,7 @@ using UnityEngine.SceneManagement;
 using Image = UnityEngine.UI.Image;
 using Object = UnityEngine.Object;
 
-namespace TakoTako.SongSelect;
+namespace TaikoTweaks.SongSelect;
 
 /// <summary>
 /// This patch prevents the game from advancing to the course select after rolling a random song
@@ -37,7 +37,7 @@ public class KanbanRankIconPatch
         if (_iconsAssetBundle == null)
         {
             var assembly = typeof(KanbanRankIconPatch).Assembly;
-            using var stream = assembly.GetManifestResourceStream("TakoTako.Resources.difficons.assets");
+            using var stream = assembly.GetManifestResourceStream("TaikoTweaks.Resources.difficons.assets");
             _iconsAssetBundle = AssetBundle.LoadFromStream(stream);
 
             for (var i = 1; i < 6; i++)
@@ -93,13 +93,13 @@ public class KanbanRankIconPatch
             var diffIconObj = new GameObject($"DiffIcon for {__instance.name}");
             diffIconObj.transform.parent = clonedCrownObj.transform;
             diffIconObj.transform.localPosition = new Vector3(13.3f ,-16f, 0);
-            diffIconObj.transform.localScale = new Vector3(0.4f, 0.3f, 0.4f);
+            diffIconObj.transform.localScale = new Vector3(0.45f, 0.35f, 0.45f);
 
             var diffIconImage = diffIconObj.AddComponent<Image>();
             diffIconImage.sprite = LevelIcons[EnsoData.EnsoLevelType.Ura];
             diffIconImage.enabled = false;
 
-            clonedCrownObj.transform.localPosition = new Vector3(0, -31, 0);
+            clonedCrownObj.transform.localPosition = new Vector3(1.48f, -31, 0);
             clonedCrownObj.transform.localScale = new Vector3(0.8f, 0.8f, 0.8f);
 
             var rankImage = clonedCrownObj.GetComponent<Image>();

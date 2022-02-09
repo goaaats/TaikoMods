@@ -3,7 +3,7 @@ using System.Collections;
 using HarmonyLib;
 using UnityEngine;
 
-namespace TakoTako.SongSelect;
+namespace TaikoTweaks.SongSelect;
 
 /// <summary>
 /// This patch adds a "quick scroll" mode to the song select that skips 10 songs at a time by double tapping up or down,

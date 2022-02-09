@@ -1,6 +1,6 @@
 ﻿using HarmonyLib;
 
-namespace TakoTako.SongSelect;
+namespace TaikoTweaks.SongSelect;
 
 /// <summary>
 /// This patch prevents the game from advancing to the course select after rolling a random song
