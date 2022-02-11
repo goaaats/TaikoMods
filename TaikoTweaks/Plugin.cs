@@ -67,6 +67,11 @@ namespace TaikoTweaks
             _harmony.PatchAll(typeof(RankedMatchScoreSavePatch));
             _harmony.PatchAll(typeof(RankedMatchSongSelectPatch));
             _harmony.PatchAll(typeof(RankedMatchNetworkDlcPatch));
+
+            _harmony.PatchAll(typeof(MissingDifficultiesPatch));
+            _harmony.PatchAll(typeof(HighFpsAnimationPatch));
+
+            //this._harmony.PatchAll(typeof(ThemePatches));
         }
 
         public void StartCustomCoroutine(IEnumerator enumerator)

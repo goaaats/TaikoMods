@@ -225,9 +225,22 @@ public class RankedMatchSongSelect : MonoBehaviour
                     SceneManager.PlayBgm();
                 }
 
+                var isExistEasy = this.ChosenSong.Stars[0] > 0;
+                var isExistNormal = this.ChosenSong.Stars[1] > 0;
+                var isExistHard = this.ChosenSong.Stars[2] > 0;
+                var isExistMania = this.ChosenSong.Stars[3] > 0;
                 var isExistUra = this.ChosenSong.Stars[4] > 0;
 
-                var width = 410;
+                var width = 10;
+
+                if (isExistEasy)
+                    width += 100;
+                if (isExistNormal)
+                    width += 100;
+                if (isExistHard)
+                    width += 100;
+                if (isExistMania)
+                    width += 100;
                 if (isExistUra)
                     width += 100;
 
@@ -235,32 +248,44 @@ public class RankedMatchSongSelect : MonoBehaviour
                 GUI.Box(new Rect(0, 0, width, 140), string.Empty);
                 GUI.Box(new Rect(0, 0, width, 140), string.Empty);
 
-                if (GUI.Button(new Rect(10, 10, 90, 90), $"Easy\n{ChosenSong.Stars[0]}★"))
+                if (isExistEasy)
                 {
-                    ChosenDifficulty = EnsoData.EnsoLevelType.Easy;
-                    IsActive = false;
-                    StopPlaying();
+                    if (GUI.Button(new Rect(10, 10, 90, 90), $"Easy\n{ChosenSong.Stars[0]}★"))
+                    {
+                        ChosenDifficulty = EnsoData.EnsoLevelType.Easy;
+                        IsActive = false;
+                        StopPlaying();
+                    }
                 }
 
-                if (GUI.Button(new Rect(110, 10, 90, 90), $"Normal\n{ChosenSong.Stars[1]}★"))
+                if (isExistNormal)
                 {
-                    ChosenDifficulty = EnsoData.EnsoLevelType.Normal;
-                    IsActive = false;
-                    StopPlaying();
+                    if (GUI.Button(new Rect(110, 10, 90, 90), $"Normal\n{ChosenSong.Stars[1]}★"))
+                    {
+                        ChosenDifficulty = EnsoData.EnsoLevelType.Normal;
+                        IsActive = false;
+                        StopPlaying();
+                    }
                 }
 
-                if (GUI.Button(new Rect(210, 10, 90, 90), $"Hard\n{ChosenSong.Stars[2]}★"))
+                if (isExistHard)
                 {
-                    ChosenDifficulty = EnsoData.EnsoLevelType.Hard;
-                    IsActive = false;
-                    StopPlaying();
+                    if (GUI.Button(new Rect(210, 10, 90, 90), $"Hard\n{ChosenSong.Stars[2]}★"))
+                    {
+                        ChosenDifficulty = EnsoData.EnsoLevelType.Hard;
+                        IsActive = false;
+                        StopPlaying();
+                    }
                 }
 
-                if (GUI.Button(new Rect(310, 10, 90, 90), $"Oni\n{ChosenSong.Stars[3]}★"))
+                if (isExistMania)
                 {
-                    ChosenDifficulty = EnsoData.EnsoLevelType.Mania;
-                    IsActive = false;
-                    StopPlaying();
+                    if (GUI.Button(new Rect(310, 10, 90, 90), $"Oni\n{ChosenSong.Stars[3]}★"))
+                    {
+                        ChosenDifficulty = EnsoData.EnsoLevelType.Mania;
+                        IsActive = false;
+                        StopPlaying();
+                    }
                 }
 
                 if (isExistUra)

@@ -74,6 +74,10 @@ public class FastScrollPatch
 
             _scrollArmed = false;
             _scrollOk = false;
+
+            __instance.songPlayer.Stop(isImmediate: true);
+            __instance.isSongPlaying = false;
+            __instance.isSongLoadRequested = true;
         }
         else if (_scrollOk && !inDelayPeriod)
         {
